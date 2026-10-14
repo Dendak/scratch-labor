@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scratch-Labor: Schleifen</title>
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --hg: #f4f6fb; --karte: #ffffff; --text: #1f2333; --leise: #5f6578; --rand: #dfe3ee;
+    --akzent: #855cd6; --akzent-text: #fff; --gut: #1f7a3f; --gut-hg: #e3f3e8; --schlecht: #b3261e; --schlecht-hg: #fbe6e4;
+    --buehne: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --hg: #14161f; --karte: #1e2130; --text: #eef0f7; --leise: #a3a9bd; --rand: #343a52;
+      --akzent: #a689ee; --gut: #5cc483; --gut-hg: #183324; --schlecht: #f2867e; --schlecht-hg: #3a1d1b; --buehne: #f7f8fc;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--hg); color: var(--text); font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 62rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .2rem; }
+  h2 { font-size: 1.35rem; margin: 0 0 .4rem; }
+  .unter { color: var(--leise); margin: 0 0 1rem; }
+  nav.reiter { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+  button { font: inherit; border: 0; border-radius: 10px; padding: .6rem 1.05rem; cursor: pointer; background: var(--akzent); color: var(--akzent-text); min-height: 44px; }
+  button.zweit { background: var(--karte); color: var(--text); border: 2px solid var(--rand); }
+  nav.reiter button { background: var(--karte); color: var(--text); border: 2px solid var(--rand); }
+  nav.reiter button[aria-selected=true] { background: var(--akzent); border-color: var(--akzent); color: var(--akzent-text); }
+  .karte { background: var(--karte); border: 1px solid var(--rand); border-radius: 14px; padding: 1.1rem; margin-bottom: 1rem; }
+  .zwei { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  @media (max-width: 760px) { .zwei { grid-template-columns: 1fr; } }
+  .punkte { font-weight: 700; }
+  .knoepfe { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+  .rueckmeldung { margin-top: .8rem; padding: .7rem .9rem; border-radius: 10px; }
+  .rueckmeldung.gut { background: var(--gut-hg); border-left: 5px solid var(--gut); }
+  .rueckmeldung.schlecht { background: var(--schlecht-hg); border-left: 5px solid var(--schlecht); }
+  [hidden] { display: none !important; }
+  canvas { width: 100%; background: var(--buehne); border: 1px solid var(--rand); border-radius: 10px; display: block; }
+
+  /* ---------- Scratch-Blöcke (nachgebaut) ---------- */
+  .skript { display: inline-flex; flex-direction: column; align-items: flex-start; font: 600 14px/1.2 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #fff; }
+  .b { padding: .5rem .75rem; border-radius: 6px; margin-bottom: 2px; white-space: nowrap; border: 1px solid rgba(0,0,0,.15); box-shadow: 0 1px 0 rgba(0,0,0,.15); }
+  .b.hut { border-radius: 18px 18px 6px 6px; padding-top: .7rem; }
+  .z, .feld { display: inline-block; background: #fff; color: #575e75; border-radius: 999px; padding: .05rem .5rem; margin: 0 .2rem; font-weight: 600; min-width: 1.6rem; text-align: center; }
+  .bed { display: inline-block; background: #5cb1d6; border: 1px solid #2e8eb8; color: #fff; padding: .15rem .6rem; margin: 0 .2rem; clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); }
+  .ereignis { background: #ffbf00; border-color: #cc9900; color: #fff; }
+  .bewegung { background: #4c97ff; border-color: #3373cc; }
+  .steuerung { background: #ffab19; border-color: #cf8b17; }
+  .malstift { background: #0fbd8c; border-color: #0b8e69; }
+  .aussehen { background: #9966ff; border-color: #774dcb; }
+  .fuehlen { background: #5cb1d6; border-color: #2e8eb8; }
+  .c { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 2px; }
+  .c > .b { margin-bottom: 0; border-bottom-left-radius: 0; }
+  .c .innen { border-left: 16px solid #ffab19; padding: 2px 0 0 0; min-height: 1.4rem; display: flex; flex-direction: column; align-items: flex-start; }
+  .c .fuss { width: 7rem; height: 14px; background: #ffab19; border-radius: 0 0 6px 6px; border: 1px solid #cf8b17; border-top: 0; }
+  .skript-rahmen { background: #f9f9fb; border: 1px solid var(--rand); border-radius: 10px; padding: .9rem; overflow-x: auto; }
+  @media (prefers-color-scheme: dark) { .skript-rahmen { background: #2a2e40; } }
+
+  /* ---------- Auswahl ---------- */
+  .wahl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .wahl button { background: var(--karte); border: 3px solid var(--rand); padding: .3rem; border-radius: 12px; }
+  .wahl button canvas { border: 0; }
+  .wahl button.richtig { border-color: var(--gut); }
+  .wahl button.falsch { border-color: var(--schlecht); }
+  .optionen { display: grid; gap: .5rem; margin-top: .8rem; }
+  .optionen button { text-align: left; background: var(--karte); color: var(--text); border: 2px solid var(--rand); }
+  .optionen button.richtig { border-color: var(--gut); background: var(--gut-hg); }
+  .optionen button.falsch { border-color: var(--schlecht); background: var(--schlecht-hg); }
+  .eingaben { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+  .eingaben input { width: 4.2rem; font: 600 1rem system-ui; padding: .45rem; border-radius: 999px; border: 2px solid #3373cc; text-align: center; }
+  .auftraege { list-style: none; padding: 0; margin: .6rem 0 0; display: grid; gap: .35rem; }
+  .auftraege li { padding: .4rem .7rem; border-radius: 8px; background: var(--hg); }
+  .auftraege li.ja { background: var(--gut-hg); }
+  .auftraege li::before { content: "○ "; font-weight: 700; }
+  .auftraege li.ja::before { content: "✓ "; color: var(--gut); }
+  footer { margin-top: 2rem; color: var(--leise); font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🐱 Scratch-Labor: Schleifen</h1>
+  <p class="unter">Schleifen und Bedingungen verstehen – die Katze zeichnet jedes Skript live nach.</p>
+
+  <nav class="reiter">
+    <button aria-selected="true" data-teil="zeichnen">1 · Was zeichnet das?</button>
+    <button aria-selected="false" data-teil="winkel">2 · Winkel-Labor</button>
+    <button aria-selected="false" data-teil="bugs">3 · Bug-Jagd</button>
+  </nav>
+
+  <!-- 1 Was zeichnet das? -->
+  <section id="teil-zeichnen">
+    <div class="karte"><h2>Was zeichnet das Skript?</h2>
+      <p class="unter" style="margin:0">Lies das Skript und tippe auf das passende Bild. Dann zeichnet die Katze es nach. <span class="punkte" id="z-stand"></span></p></div>
+    <div class="zwei">
+      <div class="karte"><p class="unter" id="z-nr" style="margin-top:0"></p><div class="skript-rahmen" id="z-skript"></div></div>
+      <div class="karte"><div class="wahl" id="z-wahl"></div><div id="z-feedback"></div>
+        <canvas id="z-buehne" width="480" height="360" hidden></canvas>
+        <div class="knoepfe"><button class="zweit" id="z-weiter" hidden>Nächstes Skript →</button></div></div>
+    </div>
+  </section>
+
+  <!-- 2 Winkel-Labor -->
+  <section id="teil-winkel" hidden>
+    <div class="karte"><h2>Winkel-Labor</h2>
+      <p class="unter" style="margin:0">Stell die Zahlen ein und starte. Finde für jede Figur den richtigen Drehwinkel!</p></div>
+    <div class="zwei">
+      <div class="karte">
+        <div class="skript">
+          <div class="b ereignis hut">Wenn ⚑ angeklickt wird</div>
+          <div class="b malstift">lösche alles</div>
+          <div class="b malstift">schalte Stift ein</div>
+          <div class="c"><div class="b steuerung eingaben">wiederhole <input id="w-n" type="number" min="1" max="72" value="4" aria-label="Wiederholungen"> -mal</div>
+            <div class="innen">
+              <div class="b bewegung eingaben">gehe <input id="w-l" type="number" min="5" max="300" value="100" aria-label="Schritte"> er-Schritt</div>
+              <div class="b bewegung eingaben">drehe dich ↻ um <input id="w-w" type="number" min="1" max="360" value="90" aria-label="Grad"> Grad</div>
+            </div><div class="fuss"></div></div>
+        </div>
+        <div class="knoepfe"><button id="w-start">⚑ Start</button></div>
+        <div id="w-feedback"></div>
+        <h3 style="margin:1rem 0 0">Aufträge</h3>
+        <ul class="auftraege" id="w-auftraege"></ul>
+      </div>
+      <div class="karte"><canvas id="w-buehne" width="480" height="360"></canvas></div>
+    </div>
+  </section>
+
+  <!-- 3 Bug-Jagd -->
+  <section id="teil-bugs" hidden>
+    <div class="karte"><h2>Bug-Jagd</h2>
+      <p class="unter" style="margin:0">In jedem Skript steckt ein Fehler (ein „Bug“). Findest du ihn? <span class="punkte" id="b-stand"></span></p></div>
+    <div class="zwei">
+      <div class="karte"><p class="unter" id="b-nr" style="margin-top:0"></p><p id="b-problem" style="font-weight:600"></p><div class="skript-rahmen" id="b-skript"></div>
+        <canvas id="b-buehne" width="480" height="300" hidden style="margin-top:.8rem"></canvas></div>
+      <div class="karte"><div class="optionen" id="b-optionen"></div><div id="b-feedback"></div>
+        <div class="knoepfe"><button class="zweit" id="b-weiter" hidden>Nächster Bug →</button></div></div>
+    </div>
+  </section>
+
+  <footer>Übungsseite für den Unterricht (Digitale Grundbildung, 4. Klasse). Die Blöcke sind nachgebaut wie in Scratch. Es wird nichts gespeichert.</footer>
+</main>
+
+<script>
+  // ---------- Reiter ----------
+  document.querySelectorAll('nav.reiter button').forEach((r, _, alle) => r.addEventListener('click', () => {
+    alle.forEach((x) => x.setAttribute('aria-selected', x === r));
+    for (const t of ['zeichnen', 'winkel', 'bugs']) document.getElementById('teil-' + t).hidden = t !== r.dataset.teil;
+  }));
+  const rueck = (gut, html) => `<div class="rueckmeldung ${gut ? 'gut' : 'schlecht'}">${html}</div>`;
+  const mische = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
+
+  // ---------- Programme: Liste von Befehlen ----------
+  // ['gehe', n] · ['rechts', grad] · ['links', grad] · ['wdh', n, [...]] · ['stift', true|false] · ['loesche']
+  // ['gehezu', x, y] · ['fort', [...]] · ['falls', 'Bedingung', [...]] · ['text', 'kategorie', 'Text']
+  const z = (n) => `<span class="z">${n}</span>`;
+  function bloecke(prog) {
+    return prog.map((b) => {
+      switch (b[0]) {
+        case 'flagge': return '<div class="b ereignis hut">Wenn ⚑ angeklickt wird</div>';
+        case 'gehe': return `<div class="b bewegung">gehe ${z(b[1])}er-Schritt</div>`;
+        case 'rechts': return `<div class="b bewegung">drehe dich ↻ um ${z(b[1])} Grad</div>`;
+        case 'links': return `<div class="b bewegung">drehe dich ↺ um ${z(b[1])} Grad</div>`;
+        case 'gehezu': return `<div class="b bewegung">gehe zu x: ${z(b[1])} y: ${z(b[2])}</div>`;
+        case 'stift': return `<div class="b malstift">schalte Stift ${b[1] ? 'ein' : 'aus'}</div>`;
+        case 'loesche': return '<div class="b malstift">lösche alles</div>';
+        case 'text': return `<div class="b ${b[1]}">${b[2]}</div>`;
+        case 'wdh': return `<div class="c"><div class="b steuerung">wiederhole ${z(b[1])}-mal</div><div class="innen">${bloecke(b[2])}</div><div class="fuss"></div></div>`;
+        case 'fort': return `<div class="c"><div class="b steuerung">wiederhole fortlaufend</div><div class="innen">${bloecke(b[1])}</div><div class="fuss"></div></div>`;
+        case 'falls': return `<div class="c"><div class="b steuerung">falls <span class="bed">${b[1]}</span>, dann</div><div class="innen">${bloecke(b[2])}</div><div class="fuss" style="width:5rem"></div></div>`;
+      }
+      return '';
+    }).join('');
+  }
+  const skript = (prog) => `<div class="skript">${bloecke(prog)}</div>`;
+
+  // Katze laufen lassen: Linien sammeln (Scratch: Richtung 90 = nach rechts, ↻ = im Uhrzeigersinn)
+  function laufe(prog) {
+    const t = { x: 0, y: 0, r: 90, stift: false }, linien = [], punkte = [{ x: 0, y: 0 }];
+    let schritte = 0;
+    const lauf = (p) => {
+      for (const b of p) {
+        if (schritte++ > 5000) return;
+        if (b[0] === 'gehe') {
+          const nx = t.x + b[1] * Math.sin(t.r * Math.PI / 180), ny = t.y + b[1] * Math.cos(t.r * Math.PI / 180);
+          if (t.stift) linien.push([t.x, t.y, nx, ny]);
+          t.x = nx; t.y = ny; punkte.push({ x: nx, y: ny });
+        } else if (b[0] === 'rechts') t.r += b[1];
+        else if (b[0] === 'links') t.r -= b[1];
+        else if (b[0] === 'stift') t.stift = b[1];
+        else if (b[0] === 'wdh') for (let i = 0; i < b[1]; i++) lauf(b[2]);
+      }
+    };
+    lauf(prog);
+    return { linien, punkte, ende: { ...t } };
+  }
+  // Zeichnen, automatisch eingepasst; mit anim = Schritt für Schritt
+  function zeichne(canvas, prog, anim = false, fertig) {
+    const g = canvas.getContext('2d'), { linien, punkte } = laufe(prog);
+    const xs = punkte.map((p) => p.x), ys = punkte.map((p) => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const rand = 28, b = canvas.width - 2 * rand, h = canvas.height - 2 * rand;
+    const f = Math.min(b / Math.max(maxX - minX, 1), h / Math.max(maxY - minY, 1), 2.2);
+    const ox = rand + (b - (maxX - minX) * f) / 2 - minX * f, oy = rand + (h - (maxY - minY) * f) / 2 + maxY * f;
+    const X = (x) => ox + x * f, Y = (y) => oy - y * f;
+    let n = anim ? 0 : linien.length;
+    const male = () => {
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      g.lineWidth = 3; g.lineCap = 'round'; g.strokeStyle = '#4c97ff';
+      for (let i = 0; i < Math.floor(n) && i < linien.length; i++) {
+        const [a, c, d, e] = linien[i];
+        g.beginPath(); g.moveTo(X(a), Y(c)); g.lineTo(X(d), Y(e)); g.stroke();
+      }
+      if (anim) {
+        const l = linien[Math.min(Math.floor(n), linien.length - 1)];
+        const pos = l ? (Math.floor(n) >= linien.length ? [l[2], l[3]] : [l[0], l[1]]) : [0, 0];
+        g.font = '26px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText('🐱', X(pos[0]), Y(pos[1]));
+      }
+    };
+    if (!anim) { male(); return; }
+    const schritt = Math.max(0.12, linien.length / 90);
+    const tick = () => { n += schritt; male(); if (n < linien.length) requestAnimationFrame(tick); else { n = linien.length; male(); fertig && fertig(); } };
+    tick();
+  }
+
+  // ---------- 1 Was zeichnet das? ----------
+  const kopf = [['flagge'], ['loesche'], ['stift', true]];
+  const P = {
+    quadrat: [['wdh', 4, [['gehe', 100], ['rechts', 90]]]],
+    dreieck: [['wdh', 3, [['gehe', 100], ['rechts', 120]]]],
+    halbsechs: [['wdh', 3, [['gehe', 100], ['rechts', 60]]]],
+    sechseck: [['wdh', 6, [['gehe', 60], ['rechts', 60]]]],
+    linie: [['gehe', 300]],
+    rechteck: [['wdh', 2, [['gehe', 150], ['rechts', 90], ['gehe', 70], ['rechts', 90]]]],
+    treppe: [['wdh', 4, [['gehe', 40], ['links', 90], ['gehe', 40], ['rechts', 90]]]],
+    zickzack: [['wdh', 4, [['gehe', 40], ['links', 45], ['gehe', 40], ['rechts', 45]]]],
+    blume: [['wdh', 8, [['wdh', 4, [['gehe', 50], ['rechts', 90]]], ['rechts', 45]]]],
+    reihe: [['wdh', 4, [['wdh', 4, [['gehe', 40], ['rechts', 90]]], ['gehe', 60]]]],
+    achteck: [['wdh', 8, [['gehe', 50], ['rechts', 45]]]],
+    stern: [['wdh', 5, [['gehe', 120], ['rechts', 144]]]],
+    fuenfeck: [['wdh', 5, [['gehe', 120], ['rechts', 72]]]],
+  };
+  const RUNDEN = [
+    { prog: 'quadrat', wahl: ['quadrat', 'dreieck', 'linie', 'rechteck'], erkl: 'Die Schleife läuft 4-mal: gehen, um 90° drehen – ein <strong>Quadrat</strong>.' },
+    { prog: 'dreieck', wahl: ['dreieck', 'halbsechs', 'quadrat', 'sechseck'], erkl: '3-mal gehen und um <strong>120°</strong> drehen ergibt ein Dreieck: 3 · 120° = 360°.' },
+    { prog: 'treppe', wahl: ['treppe', 'zickzack', 'quadrat', 'linie'], erkl: 'Abwechselnd ↺ links und ↻ rechts um 90°: Die Katze steigt eine <strong>Treppe</strong> hinauf.' },
+    { prog: 'stern', wahl: ['stern', 'fuenfeck', 'dreieck', 'achteck'], erkl: '5-mal um <strong>144°</strong> drehen: 5 · 144° = 720° – die Katze dreht sich zweimal ganz herum, das gibt einen <strong>Stern</strong>.' },
+    { prog: 'blume', wahl: ['blume', 'reihe', 'achteck', 'quadrat'], erkl: 'Eine <strong>Schleife in der Schleife</strong>: 8 Quadrate, nach jedem dreht sich die Katze um 45° – eine Blume.' },
+  ];
+  let zNr = 0, zPunkte = 0, zFertig = false;
+  const zStand = () => (document.getElementById('z-stand').textContent = `Punkte: ${zPunkte} von ${RUNDEN.length}`);
+  function zRunde() {
+    const r = RUNDEN[zNr];
+    zFertig = false;
+    document.getElementById('z-nr').textContent = `Skript ${zNr + 1} von ${RUNDEN.length}`;
+    document.getElementById('z-skript').innerHTML = skript([...kopf, ...P[r.prog]]);
+    document.getElementById('z-feedback').innerHTML = '';
+    document.getElementById('z-weiter').hidden = true;
+    document.getElementById('z-buehne').hidden = true;
+    const wahl = document.getElementById('z-wahl');
+    wahl.hidden = false; wahl.innerHTML = '';
+    for (const name of mische(r.wahl)) {
+      const k = document.createElement('button'); k.type = 'button'; k.setAttribute('aria-label', 'Bild');
+      const c = document.createElement('canvas'); c.width = 240; c.height = 170; k.appendChild(c);
+      zeichne(c, [...kopf, ...P[name]]);
+      k.addEventListener('click', () => {
+        if (zFertig) return;
+        zFertig = true;
+        const ok = name === r.prog;
+        if (ok) zPunkte++;
+        zStand();
+        k.classList.add(ok ? 'richtig' : 'falsch');
+        document.getElementById('z-feedback').innerHTML = rueck(ok, (ok ? '🎯 Richtig! ' : '❌ Leider nein. ') + r.erkl + ' Schau zu, wie die Katze zeichnet:');
+        wahl.hidden = true;
+        const b = document.getElementById('z-buehne'); b.hidden = false;
+        zeichne(b, [...kopf, ...P[r.prog]], true);
+        const weiter = document.getElementById('z-weiter'); weiter.hidden = false;
+        weiter.textContent = zNr < RUNDEN.length - 1 ? 'Nächstes Skript →' : 'Nochmal von vorne';
+      });
+      wahl.appendChild(k);
+    }
+  }
+  document.getElementById('z-weiter').addEventListener('click', () => {
+    if (zNr < RUNDEN.length - 1) zNr++; else { zNr = 0; zPunkte = 0; zStand(); }
+    zRunde();
+  });
+  zStand(); zRunde();
+
+  // ---------- 2 Winkel-Labor ----------
+  const AUFTRAEGE = [
+    { name: 'Dreieck', pruef: (n, w) => n === 3 && w === 120 },
+    { name: 'Quadrat', pruef: (n, w) => n === 4 && w === 90 },
+    { name: 'Fünfeck', pruef: (n, w) => n === 5 && w === 72 },
+    { name: 'Sechseck', pruef: (n, w) => n === 6 && w === 60 },
+    { name: 'Achteck', pruef: (n, w) => n === 8 && w === 45 },
+    { name: 'fast ein Kreis (36 Ecken)', pruef: (n, w) => n === 36 && w === 10 },
+    { name: '⭐ Profi: Stern mit 5 Zacken', pruef: (n, w) => n === 5 && w === 144 },
+  ];
+  const geschafft = new Set();
+  function zeigeAuftraege() {
+    document.getElementById('w-auftraege').innerHTML = AUFTRAEGE.map((a, i) => `<li class="${geschafft.has(i) ? 'ja' : ''}">${a.name}</li>`).join('');
+  }
+  document.getElementById('w-start').addEventListener('click', () => {
+    const n = Math.max(1, Math.min(72, Math.round(Number(document.getElementById('w-n').value) || 1)));
+    const l = Math.max(5, Math.min(300, Number(document.getElementById('w-l').value) || 100));
+    const w = Math.round(Number(document.getElementById('w-w').value) || 0);
+    const prog = [['stift', true], ['wdh', n, [['gehe', l], ['rechts', w]]]];
+    const fb = document.getElementById('w-feedback');
+    fb.innerHTML = '';
+    zeichne(document.getElementById('w-buehne'), prog, true, () => {
+      const { ende } = laufe(prog);
+      const zu = Math.hypot(ende.x, ende.y) < 0.5;
+      const neu = AUFTRAEGE.findIndex((a, i) => a.pruef(n, w) && !geschafft.has(i));
+      AUFTRAEGE.forEach((a, i) => { if (a.pruef(n, w)) geschafft.add(i); });
+      zeigeAuftraege();
+      fb.innerHTML = zu
+        ? rueck(true, `✅ Die Figur ist geschlossen: ${n} · ${w}° = ${n * w}°.${neu >= 0 ? ` Auftrag „${AUFTRAEGE[neu].name}“ geschafft!` : ''}${geschafft.size === AUFTRAEGE.length ? ' 🏆 Alle Aufträge erledigt!' : ''}`)
+        : rueck(false, `Die Figur ist nicht geschlossen: ${n} · ${w}° = ${n * w}°. Damit die Katze wieder am Start ankommt, muss <strong>Anzahl · Winkel = 360°</strong> sein (oder ein Vielfaches davon). Tipp: Winkel = 360° : Anzahl der Ecken.`);
+    });
+  });
+  zeigeAuftraege();
+  zeichne(document.getElementById('w-buehne'), [['stift', true], ['wdh', 4, [['gehe', 100], ['rechts', 90]]]]);
+
+  // ---------- 3 Bug-Jagd ----------
+  const taste = (t) => `Taste <span class="feld">${t}</span> gedrückt?`;
+  const BUGS = [
+    {
+      problem: 'Die Figur soll mit der Pfeiltaste nach rechts laufen – aber sie bewegt sich gar nicht.',
+      prog: [['flagge'], ['gehezu', -200, -150], ['falls', taste('Pfeil nach rechts'), [['text', 'bewegung', `ändere x um ${z(3)}`]]]],
+      optionen: [
+        ['Das „falls“ steht nicht in „wiederhole fortlaufend“ – es wird nur ein einziges Mal beim Start geprüft.', true],
+        ['Die Zahl 3 ist zu klein.', false],
+        ['Es fehlt „schalte Stift ein“.', false],
+        ['Statt „ändere x“ muss es „ändere y“ heißen.', false],
+      ],
+      erkl: 'Ohne Schleife prüft Scratch die Taste nur in dem Moment, in dem du auf ⚑ klickst. In <strong>wiederhole fortlaufend</strong> wird sie immer wieder geprüft.',
+    },
+    {
+      problem: 'Es soll ein Dreieck werden – die Katze zeichnet aber nur ein halbes Sechseck.',
+      prog: [...kopf, ['wdh', 3, [['gehe', 100], ['rechts', 60]]]],
+      zeichnen: true,
+      optionen: [
+        ['Der Drehwinkel muss 120° sein, nicht 60°.', true],
+        ['Es muss „wiederhole 6-mal“ heißen.', false],
+        ['Die Katze muss 200er-Schritte gehen.', false],
+        ['„lösche alles“ ist schuld.', false],
+      ],
+      erkl: 'Die Katze dreht sich um den <strong>Außenwinkel</strong>: 360° : 3 = 120°. 60° ist der Winkel innen im Dreieck.',
+    },
+    {
+      problem: 'Die Katze läuft im Quadrat herum – aber auf der Bühne ist nichts zu sehen.',
+      prog: [['flagge'], ['loesche'], ['wdh', 4, [['gehe', 100], ['rechts', 90]]]],
+      optionen: [
+        ['Es fehlt „schalte Stift ein“ vor der Schleife.', true],
+        ['„lösche alles“ löscht das Quadrat sofort wieder.', false],
+        ['Die Schleife braucht 5 Durchgänge.', false],
+        ['Die Malstift-Farbe ist weiß.', false],
+      ],
+      erkl: 'Am Anfang ist der Stift <strong>oben</strong>. Erst „schalte Stift ein“ setzt ihn ab – dann zeichnet die Katze.',
+    },
+    {
+      problem: 'Im Labyrinth läuft die Figur bei „Pfeil nach links“ nach rechts.',
+      prog: [['flagge'], ['fort', [['falls', taste('Pfeil nach links'), [['text', 'bewegung', `ändere x um ${z(3)}`]]]]]],
+      optionen: [
+        ['Es muss „ändere x um -3“ heißen – nach links wird x kleiner.', true],
+        ['Es muss „ändere y um 3“ heißen.', false],
+        ['Die Pfeiltaste gehört in ein eigenes Skript.', false],
+        ['„wiederhole fortlaufend“ ist falsch, richtig wäre „wiederhole 10-mal“.', false],
+      ],
+      erkl: 'x ist die Position <strong>links–rechts</strong>: nach rechts wird x größer (+3), nach links kleiner (<strong>-3</strong>).',
+    },
+    {
+      problem: 'Die Wände im Labyrinth sind schwarz – aber die Figur läuft einfach hindurch.',
+      prog: [['flagge'], ['fort', [['falls', 'wird Farbe <span class="feld" style="background:#3d7dff;color:#fff">blau</span> berührt?', [['text', 'bewegung', `gehe zu x: ${z(-200)} y: ${z(-150)}`]]]]]],
+      optionen: [
+        ['Im Block steht die falsche Farbe (blau statt schwarz) – die Wandfarbe mit der Pipette von der Bühne nehmen.', true],
+        ['Die Figur ist zu klein.', false],
+        ['„gehe zu x: -200 y: -150“ muss vor der Schleife stehen.', false],
+        ['Das „falls“ muss außerhalb von „wiederhole fortlaufend“ stehen.', false],
+      ],
+      erkl: 'Scratch prüft genau die Farbe im Block. Klick auf das Farbfeld, dann auf die <strong>Pipette</strong> und auf eine Wand – so stimmt die Farbe exakt.',
+    },
+  ];
+  let bNr = 0, bPunkte = 0;
+  const bStand = () => (document.getElementById('b-stand').textContent = `Gefunden: ${bPunkte} von ${BUGS.length}`);
+  function bRunde() {
+    const bug = BUGS[bNr];
+    let fertig = false;
+    document.getElementById('b-nr').textContent = `Bug ${bNr + 1} von ${BUGS.length}`;
+    document.getElementById('b-problem').textContent = '🐞 ' + bug.problem;
+    document.getElementById('b-skript').innerHTML = skript(bug.prog);
+    const c = document.getElementById('b-buehne');
+    c.hidden = !bug.zeichnen;
+    if (bug.zeichnen) zeichne(c, bug.prog, true);
+    document.getElementById('b-feedback').innerHTML = '';
+    document.getElementById('b-weiter').hidden = true;
+    const o = document.getElementById('b-optionen'); o.innerHTML = '';
+    for (const [text, ok] of mische(bug.optionen)) {
+      const k = document.createElement('button'); k.type = 'button'; k.textContent = text;
+      k.addEventListener('click', () => {
+        if (fertig) return;
+        k.classList.add(ok ? 'richtig' : 'falsch');
+        if (!ok) { document.getElementById('b-feedback').innerHTML = rueck(false, '❌ Das ist es nicht – versuch es nochmal!'); return; }
+        fertig = true;
+        if (!o.querySelector('.falsch')) bPunkte++;
+        bStand();
+        document.getElementById('b-feedback').innerHTML = rueck(true, '🐞✅ Bug gefunden! ' + bug.erkl);
+        const w = document.getElementById('b-weiter'); w.hidden = false;
+        w.textContent = bNr < BUGS.length - 1 ? 'Nächster Bug →' : 'Nochmal von vorne';
+      });
+      o.appendChild(k);
+    }
+  }
+  document.getElementById('b-weiter').addEventListener('click', () => {
+    if (bNr < BUGS.length - 1) bNr++; else { bNr = 0; bPunkte = 0; bStand(); }
+    bRunde();
+  });
+  bStand(); bRunde();
+</script>
+</body>
+</html>
